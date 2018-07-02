@@ -134,7 +134,7 @@ namespace AspNetCore_Luis_Dispatch_Bot
             }
             }
             catch (Exception e){
-                await context.SendActivity($"QNAMaker exception: " + e.Message);
+                await context.SendActivity($"QNAMaker exception: " + e.Message +"\n"+e.StackTrace);
 
             }
         }
