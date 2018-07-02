@@ -152,7 +152,7 @@ namespace AspNetCore_Luis_Dispatch_Bot
             var httpContent = new StringContent("{'question':'" + text + "'}", Encoding.UTF8, "application/json");
 
             var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", qnaOptions.EndpointKey);
+            httpClient.DefaultRequestHeaders.Add("Authorization", "EndpointKey " + qnaOptions.EndpointKey);
             var httpResponse = await httpClient.PostAsync(url, httpContent);
             var httpResponseMessage = await httpResponse.Content.ReadAsStringAsync();
             dynamic httpResponseJson = JsonConvert.DeserializeObject(httpResponseMessage);
