@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -105,8 +106,8 @@ namespace AspNetCore_Luis_Dispatch_Bot
                 // You can provide logic here to handle the known None intent (none of the above).
                 // In this example we fall through to the QnA intent.
                 case "q_faq":
-                    //await DispatchToQnAMaker(context, this.qnaEndpoint, "FAQ");
-                    //break;
+                    await DispatchToQnAMaker(context, this.qnaEndpoint, "FAQ");
+                    break;
                 default:
                     // The intent didn't match any case, so just display the recognition results.
                     await context.SendActivity($"Dispatch intent: {topIntent.Value.intent} ({topIntent.Value.score}).");
@@ -117,6 +118,7 @@ namespace AspNetCore_Luis_Dispatch_Bot
 
         private static async Task DispatchToQnAMaker(ITurnContext context, QnAMakerEndpoint qnaOptions, string appName)
         {
+            try{
             QnAMaker qnaMaker = new QnAMaker(qnaOptions);
             if (!string.IsNullOrEmpty(context.Activity.Text))
             {
@@ -129,6 +131,11 @@ namespace AspNetCore_Luis_Dispatch_Bot
                 {
                     await context.SendActivity($"Couldn't find an answer in the {appName}.");
                 }
+            }
+            }
+            catch (Exception e){
+                await context.SendActivity($"QNAMaker exception: " + e.Message);
+
             }
         }
 
