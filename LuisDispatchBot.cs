@@ -105,8 +105,8 @@ namespace AspNetCore_Luis_Dispatch_Bot
                 // You can provide logic here to handle the known None intent (none of the above).
                 // In this example we fall through to the QnA intent.
                 case "q_faq":
-                    await DispatchToQnAMaker(context, this.qnaEndpoint, "FAQ");
-                    break;
+                    //await DispatchToQnAMaker(context, this.qnaEndpoint, "FAQ");
+                    //break;
                 default:
                     // The intent didn't match any case, so just display the recognition results.
                     await context.SendActivity($"Dispatch intent: {topIntent.Value.intent} ({topIntent.Value.score}).");
