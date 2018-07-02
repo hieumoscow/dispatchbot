@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Bot;
 using Microsoft.Bot.Builder;
@@ -12,6 +14,7 @@ using Microsoft.Bot.Builder.Ai.QnA;
 using Microsoft.Bot.Builder.Core.Extensions;
 using Microsoft.Bot.Schema;
 using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
 
 namespace AspNetCore_Luis_Dispatch_Bot
 {
@@ -106,8 +109,8 @@ namespace AspNetCore_Luis_Dispatch_Bot
                 // You can provide logic here to handle the known None intent (none of the above).
                 // In this example we fall through to the QnA intent.
                 case "q_faq":
-                    //await DispatchToQnAMaker(context, this.qnaEndpoint, "FAQ");
-                    //break;
+                    await DispatchToQnAMaker(context, this.qnaEndpoint, "FAQ");
+                    break;
                 default:
                     // The intent didn't match any case, so just display the recognition results.
                     await context.SendActivity($"Dispatch intent: {topIntent.Value.intent} ({topIntent.Value.score}).");
@@ -119,24 +122,42 @@ namespace AspNetCore_Luis_Dispatch_Bot
         private static async Task DispatchToQnAMaker(ITurnContext context, QnAMakerEndpoint qnaOptions, string appName)
         {
             try{
-            QnAMaker qnaMaker = new QnAMaker(qnaOptions);
-            if (!string.IsNullOrEmpty(context.Activity.Text))
-            {
-                var results = await qnaMaker.GetAnswers(context.Activity.Text.Trim()).ConfigureAwait(false);
-                if (results.Any())
-                {
-                    await context.SendActivity(results.First().Answer);
-                }
-                else
-                {
-                    await context.SendActivity($"Couldn't find an answer in the {appName}.");
-                }
-            }
+                await MessageReceivedAsync(context, qnaOptions);
+            //QnAMaker qnaMaker = new QnAMaker(qnaOptions);
+            //if (!string.IsNullOrEmpty(context.Activity.Text))
+            //{
+            //    var results = await qnaMaker.GetAnswers(context.Activity.Text.Trim()).ConfigureAwait(false);
+            //    if (results.Any())
+            //    {
+            //        await context.SendActivity(results.First().Answer);
+            //    }
+            //    else
+            //    {
+            //        await context.SendActivity($"Couldn't find an answer in the {appName}.");
+            //    }
+            //}
             }
             catch (Exception e){
                 await context.SendActivity($"QNAMaker exception: " + e.Message +"\n"+e.StackTrace);
 
             }
+        }
+
+        private static async Task MessageReceivedAsync(ITurnContext context,QnAMakerEndpoint qnaOptions)
+        {
+            var text = (context.Activity.Text ?? string.Empty).Trim();
+
+            var url =
+                $"{qnaOptions.Host}/knowledgebases/{qnaOptions.KnowledgeBaseId}/generateAnswer";
+            var httpContent = new StringContent("{'question':'" + text + "'}", Encoding.UTF8, "application/json");
+
+            var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", qnaOptions.EndpointKey);
+            var httpResponse = await httpClient.PostAsync(url, httpContent);
+            var httpResponseMessage = await httpResponse.Content.ReadAsStringAsync();
+            dynamic httpResponseJson = JsonConvert.DeserializeObject(httpResponseMessage);
+            var replyMessage = (string)httpResponseJson.answers[0].answer;
+            await context.SendActivity(replyMessage);
         }
 
         private static async Task DispatchToLuisModel(ITurnContext context, LuisModel luisModel, string appName)
